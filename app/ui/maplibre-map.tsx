@@ -1,9 +1,5 @@
 import { clientEntry, ref, type Handle, type SerializableProps } from 'remix/ui'
 
-const MAPLIBRE_VERSION = '5.24.0'
-const MAPLIBRE_CSS_HREF = `https://esm.sh/maplibre-gl@${MAPLIBRE_VERSION}/dist/maplibre-gl.css`
-const MAPLIBRE_JS_URL = `https://esm.sh/maplibre-gl@${MAPLIBRE_VERSION}`
-
 interface MapLibreMapProps extends SerializableProps {
   center: [number, number]
   zoom: number
@@ -11,14 +7,14 @@ interface MapLibreMapProps extends SerializableProps {
 }
 
 export const MapLibreMap = clientEntry(
-  '/assets/app/ui/maplibre-map.tsx#MapLibreMap',
+  import.meta.url,
   function MapLibreMap(handle: Handle<MapLibreMapProps>) {
     let initialCenter = `${handle.props.center[1].toFixed(4)}, ${handle.props.center[0].toFixed(4)}`
     let initialZoom = handle.props.zoom.toFixed(1)
     return () => (
       <main
         mix={ref(async (node, signal) => {
-          let maplibregl = await import(MAPLIBRE_JS_URL)
+          let maplibregl = await import('maplibre-gl')
           if (signal.aborted) return
 
           let mapEl = node.querySelector('#map') as HTMLElement
@@ -114,9 +110,13 @@ const MAP_CSS = `
   }
 `
 
-export const MAP_HEAD = (
-  <>
-    <link rel="stylesheet" href={MAPLIBRE_CSS_HREF} />
-    <style>{MAP_CSS}</style>
-  </>
-)
+export function mapHead(cssHref: string, moduleUrl: string) {
+  let importMap = JSON.stringify({ imports: { 'maplibre-gl': moduleUrl } })
+  return (
+    <>
+      <script type="importmap">{importMap}</script>
+      <link rel="stylesheet" href={cssHref} />
+      <style>{MAP_CSS}</style>
+    </>
+  )
+}

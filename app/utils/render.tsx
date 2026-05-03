@@ -1,6 +1,7 @@
 import type { RemixNode } from 'remix/ui'
 import { renderToStream } from 'remix/ui/server'
 
+import { assets } from '../assets.ts'
 import { router } from '../router.ts'
 
 export function render(node: RemixNode, request: Request, init?: ResponseInit) {
@@ -14,6 +15,17 @@ export function render(node: RemixNode, request: Request, init?: ResponseInit) {
 
       let response = await router.fetch(new Request(new URL(src, request.url), { headers }))
       return response.body ?? response.text()
+    },
+    async resolveClientEntry(entryId, component) {
+      let exportName = entryId.split('#')[1] || component.name
+      if (!exportName) {
+        throw new Error(`Unable to resolve client entry export for ${entryId}`)
+      }
+
+      return {
+        href: await assets.getHref(entryId),
+        exportName,
+      }
     },
   })
 
